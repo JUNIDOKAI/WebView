@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool WebView 🛡</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Chế độ sáng */
+        body.light-mode {
+            background-color: white;
+            color: black;
+        }
+
+        /* Chế độ tối */
+        body.dark-mode {
+            background-color: #2c2c2c;
+            color: white;
+        }
+
+        .task-bar {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .menu {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 10px;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .menu.active {
+            display: flex;
+        }
+
+        .menu button {
+            padding: 5px 10px;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        /* Grid để chia màn hình */
+        .container {
+            display: grid;
+            grid-gap: 10px;
+            padding: 20px;
+            transition: grid-template-columns 0.3s;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        /* Các kiểu chia màn hình theo số ô */
+        .grid-1 {
+            grid-template-columns: 1fr;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat (2, 1fr)
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat (3, 1fr)
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat (4, 1fr);
+        }
+
+        .grid-5 {
+            grid-template-columns: repeat (5, 1fr)
+        }
+
+        .grid-6 {
+            grid-template-columns: repeat (6 1fr);
+        }
+
+        .grid-7 {
+            grid-template-columns: repeat (7 1fr);
+        }
+
+        .grid-8 {
+            grid-template-columns: repeat (8, 1fr);
+        }
+
+        .grid-9 {
+            grid-template-columns: repeat (9 1fr);
+        }
+
+        .grid-10 {
+            grid-template-columns: repeat (10, 1fr);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            flex-grow: 1;
+        }
+
+        /* Đảm bảo các iframe phù hợp khi quay ngang trên điện thoại */
+        @media (orientation: landscape) {
+            .container {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div class="task-bar" onclick="toggleMenu()">👾</div>
+
+    <div class="menu" id="taskMenu">
+        <button onclick="changeGrid(1)">1 ô</button>
+        <button onclick="changeGrid(2)">2 ô</button>
+        <button onclick="changeGrid(3)">3 ô</button>
+        <button onclick="changeGrid(4)">4 ô</button>
+        <button onclick="changeGrid(5)">5 ô</button>
+        <button onclick="changeGrid(6)">6 ô</button>
+        <button onclick="changeGrid(5)">7 ô</button>
+        <button onclick="changeGrid(6)">8 ô</button>
+        <button onclick="changeGrid(9)">9 ô</button>
+        <button onclick="changeGrid(10)">10 ô</button>
+        <button onclick="toggleTheme()">Sáng / Tối </button>
+        <button onclick="syncIframes()">Đồng bộ ⛓</button>
+    </div>
+
+    <div id="container" class="container grid-1">
+        <!-- Các iframe sẽ được tạo động từ JavaScript -->
+    </div>
+
+    <script>
+        let syncMode = false;
+
+        function toggleMenu() {
+            const menu = document.getElementById("taskMenu");
+            menu.classList.toggle("active");
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle("light-mode");
+            body.classList.toggle("dark-mode");
+        }
+
+        function changeGrid(num) {
+            const container = document.getElementById("container");
+            container.className = `container grid-${num}`;
+            generateIframes(num);
+        }
+
+        function generateIframes(num) {
+            const container = document.getElementById("container");
+            container.innerHTML = ""; // Xóa các iframe hiện tại
+            for (let i = 0; i < num; i++) {
+                const iframe = document.createElement("iframe");
+                iframe.src = "https://www.google.com"; // Hiển thị Google Tìm kiếm
+                iframe.dataset.index = i; // Thêm chỉ số cho iframe
+                iframe.addEventListener("load", function () {
+                    this.contentWindow.addEventListener('scroll', syncScroll);
+                });
+                container.appendChild(iframe);
+            }
+        }
+
+        function syncIframes() {
+            syncMode = !syncMode;
+            const iframes = document.querySelectorAll("iframe");
+            if (syncMode) {
+                iframes.forEach(iframe => {
+                    iframe.contentWindow.addEventListener('scroll', syncScroll);
+                });
+            } else {
+                iframes.forEach(iframe => {
+                    iframe.contentWindow.removeEventListener('scroll', syncScroll);
+                });
+            }
+        }
+
+        function syncScroll(event) {
+            if (!syncMode) return;
+            const iframe = event.target;
+            const iframes = document.querySelectorAll("iframe");
+            const scrollPosition = iframe.contentWindow.scrollY;
+
+            iframes.forEach((syncIframe) => {
+                if (syncIframe !== iframe) {
+                    syncIframe.contentWindow.scrollTo(0, scrollPosition);
+                }
+            });
+        }
+
+        // Mặc định chia màn hình thành 1 ô
+        generateIframes(1);
+    </script>
+</body>
+</html>
