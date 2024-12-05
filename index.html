@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ứng dụng Chia Màn Hình</title>
+    <style>
+        /* Định nghĩa một số style cơ bản */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Chế độ sáng */
+        body.light-mode {
+            background-color: white;
+            color: black;
+        }
+        /* Chế độ tối */
+        body.dark-mode {
+            background-color: #2c2c2c;
+            color: white;
+        }
+
+        /* Ô tác vụ nổi */
+        .task-bar {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Menu tác vụ */
+        .menu {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 10px;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .menu.active {
+            display: flex;
+        }
+
+        .menu button {
+            padding: 5px 10px;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        /* Grid để chia màn hình */
+        .container {
+            display: grid;
+            grid-gap: 10px;
+            padding: 20px;
+            transition: grid-template-columns 0.3s, grid-template-rows 0.3s;
+        }
+
+        /* Các kiểu chia màn hình theo số ô */
+        .grid-1 {
+            grid-template-columns: 1fr;
+        }
+
+        .grid-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .grid-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .grid-4 {
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+        }
+
+        .grid-5 {
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+        }
+
+        /* Tối đa 10 ô */
+        .grid-10 {
+            grid-template-columns: repeat(10, 1fr);
+        }
+
+        /* Chuyển động mượt mà cho các iframe */
+        iframe {
+            border: none;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        /* Responsive khi xoay ngang/dọc màn hình */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <!-- Nút tác vụ nổi -->
+    <div class="task-bar" onclick="toggleMenu()">⚙️</div>
+
+    <!-- Menu tác vụ -->
+    <div class="menu" id="taskMenu">
+        <button onclick="changeGrid(1)">1 ô</button>
+        <button onclick="changeGrid(2)">2 ô</button>
+        <button onclick="changeGrid(3)">3 ô</button>
+        <button onclick="changeGrid(4)">4 ô</button>
+        <button onclick="changeGrid(5)">5 ô</button>
+        <button onclick="changeGrid(10)">10 ô</button>
+        <button onclick="toggleTheme()">Chế độ sáng/tối</button>
+        <button onclick="toggleSync()">Bật/Tắt đồng bộ</button>
+    </div>
+
+    <!-- Container chứa các iframe -->
+    <div id="container" class="container grid-1">
+        <!-- Các iframe sẽ được tạo động từ JavaScript -->
+    </div>
+
+    <script>
+        // Mảng lưu trữ các iframe
+        let iframes = [];
+
+        // Biến lưu trạng thái đồng bộ
+        let isSyncing = false;
+
+        // Hiển thị/ẩn menu tác vụ
+        function toggleMenu() {
+            const menu = document.getElementById("taskMenu");
+            menu.classList.toggle("active");
+        }
+
+        // Chuyển chế độ sáng/tối
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle("light-mode");
+            body.classList.toggle("dark-mode");
+        }
+
+        // Thay đổi số lượng ô chia màn hình
+        function changeGrid(num) {
+            const container = document.getElementById("container");
+            container.className = `container grid-${num}`;
+            generateIframes(num);
+        }
+
+        // Tạo các iframe theo số lượng ô
+        function generateIframes(num) {
+            const container = document.getElementById("container");
+            container.innerHTML = ""; // Xóa các iframe hiện tại
+            iframes = []; // Reset mảng iframe
+            for (let i = 0; i < num; i++) {
+                const iframe = document.createElement("iframe");
+                iframe.src = "https://www.google.com"; // Thay đổi URL theo nhu cầu
+                iframe.width = "100%";
+                iframe.height = "300px";
+                iframe.dataset.id = i; // Đánh dấu ID cho mỗi iframe
+                iframe.onload = () => setupSync(iframe); // Cấu hình đồng bộ
+                container.appendChild(iframe);
+                iframes.push(iframe); // Lưu iframe vào mảng
+            }
+        }
+
+        // Mặc định chia màn hình thành 1 ô
+        generateIframes(1);
+
+        // Thiết lập đồng bộ thao tác
+        function setupSync(iframe) {
+            iframe.contentWindow.document.body.addEventListener('click', (e) => {
+                if (isSyncing) {
+                    syncTabsAction(e);
+                }
+            });
+        }
+
+        // Bật/tắt đồng bộ hóa thao tác giữa các tab
+        function toggleSync() {
+            isSyncing = !isSyncing;
+            alert(isSyncing ? "Đồng bộ hóa tab đã được bật!" : "Đồng bộ hóa tab đã được tắt.");
+        }
+
+        // Đồng bộ thao tác giữa các tab
+        function syncTabsAction(event) {
+            const activeTab = iframes[0].contentWindow.document.body; // Lấy tab chủ
+            const clickedElement = event.target;
+
+            // Thực hiện hành động giống tab chủ
+            iframes.forEach((iframe) => {
+                const iframeDoc = iframe.contentWindow.document;
+                const sameElement = iframeDoc.querySelector(clickedElement.tagName);
+                if (sameElement) {
+                    sameElement.click(); // Giả lập click trên các tab khác
+                }
+            });
+        }
+    </script>
+</body>
+</html>
